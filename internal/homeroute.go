@@ -2,6 +2,7 @@ package internal
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -11,7 +12,9 @@ type Response struct {
 	Success bool   `json:"success"`
 }
 
-func GetHomePath(w http.ResponseWriter, r *http.Request) {
+
+
+func HomePath(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodGet {
 		data := Response{
@@ -27,19 +30,21 @@ func GetHomePath(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-	}else {
- 	data := Response{
-		Message: "Welcome to ECOM",
-		Code:    http.StatusOK,
-		Success: true,
+	} else {
+
+		fmt.Println("Request received on path / ")
+		data := Response{
+			Message: "Welcome to ECOM",
+			Code:    http.StatusOK,
+			Success: true,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		if err := json.NewEncoder(w).Encode(data); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
- 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
- 
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-  }
 }
