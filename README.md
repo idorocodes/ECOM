@@ -1,4 +1,4 @@
-# Go-Ecom: The Zero-Dependency E-commerce Engine
+# Ecom: The Zero-Dependency E-commerce Server
 
 A high-performance, lightweight e-commerce backend built entirely with the Go Standard Library. No external drivers, no frameworks, no ORMs—just pure Go.
 
@@ -26,18 +26,6 @@ Modern Go development is often cluttered with hundreds of node_modules-style dep
 - State Management: Efficient handling of cart operations.
 - Order Processing: Transactional logic flow built into the service layer.
 
-## 🛠 Project Structure
-```plaintext
-dot/
-├── cmd/
-│   └── main.go          # Entry point & Server config
-├── internal/
-│   ├── auth/            # Manual JWT & Hashing logic
-│   ├── database/        # HTTP-based Database interactions
-│   ├── handlers/        # HTTP Route handlers
-│   └── models/          # Data structures & JSON mapping
-└── README.md```
-```
 ##  Getting Started
 1. **Database Setup**
 Ensure your Supabase/Postgres instance has the required tables (users, products, orders). Ensure Row Level Security (RLS) is configured to allow your API key to perform the necessary operations.
@@ -51,12 +39,7 @@ bash
 # No go get needed!
 go run cmd/main.go
 
-##  Roadmap
-- [x] JWT Authentication Flow
-- [x] User Registration & Duplicate Prevention
-- [ ] Product Catalog API
-- [ ] Cart Logic
-[ ] Order History & Checkout 
+
  
 ##  License 
 This project is open-source and intended for those who value simplicity and the power of the Go Standard Library.
