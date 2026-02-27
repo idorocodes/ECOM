@@ -153,8 +153,7 @@ func LoginUser(password, email string) (LoginAccResponse, error) {
 	} else {
 
 		dbUserPassword := results[0]["password"].(string)
-		fmt.Println(dbUserPassword)
-
+		
 		if password != dbUserPassword {
 			return LoginAccResponse{}, errors.New("Wrong password")
 		}

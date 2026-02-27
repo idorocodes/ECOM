@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -42,6 +43,7 @@ func CreateToken(userId string) (string, error) {
 	h := hmac.New(sha256.New, secretKey)
 	h.Write([]byte(payloadAndHeader))
 	signature := base64Encode(h.Sum(nil))
+	println("Signature CREATED",signature)
 
 	// Return the jwt
 	return payloadAndHeader + "." + signature, nil
@@ -59,11 +61,12 @@ func VerifyToken(token string) (bool, string, error) {
 	h := hmac.New(sha256.New, secretKey)
 	h.Write([]byte(payloadAndHeader))
 	signature := base64Encode(h.Sum(nil)) // construct signature
+	
 
-	if parts[2] != signature { // check if signature is same as normal
-		return false, "", errors.New("Wrong Token Signature!")
-	}
-
+	if !hmac.Equal([]byte(parts[2]), []byte(signature)) {
+			fmt.Printf("DEBUG: Expected %s, got %s\n", signature, parts[2])
+			return false, "", errors.New("invalid signature")
+		}
 	payloadBytes, _ := base64.RawStdEncoding.DecodeString(parts[1]) // Header to check time
 	var claims map[string]interface{}
 	json.Unmarshal(payloadBytes, &claims)
