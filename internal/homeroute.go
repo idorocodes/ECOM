@@ -14,7 +14,7 @@ type Response struct {
 
 
 
-func HomePath(w http.ResponseWriter, r *http.Request) {
+func  HomePath(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodGet {
 		data := Response{
@@ -32,7 +32,7 @@ func HomePath(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 
-		fmt.Println("Request received on path / ")
+		fmt.Println("Request received by / ")
 		data := Response{
 			Message: "Welcome to ECOM",
 			Code:    http.StatusOK,

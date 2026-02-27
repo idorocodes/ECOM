@@ -35,7 +35,7 @@ func CreateToken(userId string) (string, error) {
 		"exp": time.Now().Add(time.Hour * 72).Unix(),
 	})
 
-	payloadEncoded :=  base64Encode(payload)
+	payloadEncoded := base64Encode(payload)
 
 	// Signature
 	payloadAndHeader := headerEncoded + "." + payloadEncoded
@@ -77,4 +77,11 @@ func VerifyToken(token string) (bool, string, error) {
 
 	// Return the payload and true if all token is verified and correct
 	return true, parts[1], nil
+}
+
+func HashPassowrd(password string) string {
+	hash := sha256.New()
+	hash.Write([]byte(password))
+	return base64.StdEncoding.EncodeToString(hash.Sum(nil))
+
 }

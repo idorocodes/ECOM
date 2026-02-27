@@ -7,15 +7,12 @@ import (
 	"net/mail"
 )
 
-type CreateAcc struct {
-	FirstName       string `json:"firstname"`
-	SecondName      string `json:"secondname"`
-	Username        string `json:"username"`
-	Email           string `json:"email"`
-	Password        string `json:"password"`
+type LoginAcc struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
-type CreateAccResponse struct {
+type LoginAccResponse struct {
 	FirstName  string `json:"firstName"`
 	SecondName string `json:"secondName"`
 	Username   string `json:"username"`
@@ -25,12 +22,7 @@ type CreateAccResponse struct {
 	Success    bool   `json:"success"`
 }
 
-type AlreadyCreatedResponse struct {
-	Message string `json:"message"`
-}
-
-
-func CreateAccount(w http.ResponseWriter, r *http.Request) {
+func LoginAccount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		data := Response{
 			Message: "Route does not exist for this method",
@@ -47,16 +39,14 @@ func CreateAccount(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 
-		fmt.Println("Request recieved by /createAccount")
+		fmt.Println("Request recieved by /loginAccount")
 		decoder := json.NewDecoder(r.Body)
 
-		var reqBody CreateAcc
+		var reqBody LoginAcc
 		err := decoder.Decode(&reqBody)
 		if err != nil {
 			http.Error(w, "Bad Body", http.StatusBadRequest)
 		}
-
-		
 
 		_, err = mail.ParseAddress(reqBody.Email)
 		if err != nil {
@@ -65,41 +55,18 @@ func CreateAccount(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if len(reqBody.FirstName) == 0 || len(reqBody.SecondName) == 0 || len(reqBody.Username) == 0 {
-			errors := "Name is invalid"
-			http.Error(w, errors, http.StatusBadRequest)
-			return
-		}
-
-		token, err := CreateToken(reqBody.Username)
-
+	
 		hashedPassword := HashPassowrd(reqBody.Password)
+		
+		response, error := LoginUser(hashedPassword, reqBody.Email)
 
-		reponse, error := CreateUser(reqBody.Username, reqBody.FirstName, reqBody.SecondName, hashedPassword, reqBody.Email)
+		if error != nil {
 
-		if fmt.Sprintf("%v",error) == "User already exists in the db"{
-			data := AlreadyCreatedResponse{
-				Message: "User already exist in the database, please login",
-			}
-			if err := json.NewEncoder(w).Encode(data); err != nil {
-				http.Error(w, err.Error(), http.StatusConflict)
-				return
-			}
-			return
-		}else if error != nil {
-             
 			http.Error(w, fmt.Sprintf("%v", error), http.StatusInternalServerError)
 			return
 		} else {
-			data := CreateAccResponse{
-				Message:    reponse,
-				FirstName:  reqBody.FirstName,
-				SecondName: reqBody.SecondName,
-				Email:      reqBody.Email,
-				Username:   reqBody.Username,
-				Success:    true,
-				Token:      token,
-			}
+
+			data := response
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
