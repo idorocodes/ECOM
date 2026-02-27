@@ -9,9 +9,10 @@ import (
 func main() {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /", internal.HomePath)
-	mux.HandleFunc("POST /users", internal.CreateAccount)
-
+	mux.HandleFunc(" /", internal.HomePath)
+	mux.HandleFunc(" /createuser", internal.CreateAccount)
+	mux.HandleFunc("/loginuser",internal.LoginAccount)
+	
 	fmt.Println("Server started on http://localhost:8080!")
 
 	http.ListenAndServe(":8080", mux)
