@@ -15,7 +15,7 @@ var secretKey = []byte("9^.2&f=2==))&&7we")
 
 // Internal function to encode a string as bytes without padding
 func base64Encode(src []byte) string {
-	return strings.TrimRight(base64.URLEncoding.EncodeToString(src), "=")
+	return strings.TrimRight(base64.RawURLEncoding.EncodeToString(src), "=")
 }
 
 // Create a new JWT token
@@ -33,6 +33,7 @@ func CreateToken(userId string) (string, error) {
 	// Payload
 	payload, _ := json.Marshal(map[string]interface{}{
 		"sub": userId,
+		"iat": time.Now().Unix(),
 		"exp": time.Now().Add(time.Hour * 72).Unix(),
 	})
 
@@ -43,7 +44,7 @@ func CreateToken(userId string) (string, error) {
 	h := hmac.New(sha256.New, secretKey)
 	h.Write([]byte(payloadAndHeader))
 	signature := base64Encode(h.Sum(nil))
-	println("Signature CREATED",signature)
+	println("Signature CREATED", signature)
 
 	// Return the jwt
 	return payloadAndHeader + "." + signature, nil
@@ -61,15 +62,33 @@ func VerifyToken(token string) (bool, string, error) {
 	h := hmac.New(sha256.New, secretKey)
 	h.Write([]byte(payloadAndHeader))
 	signature := base64Encode(h.Sum(nil)) // construct signature
-	
 
 	if !hmac.Equal([]byte(parts[2]), []byte(signature)) {
-			fmt.Printf("DEBUG: Expected %s, got %s\n", signature, parts[2])
-			return false, "", errors.New("invalid signature")
-		}
-	payloadBytes, _ := base64.RawStdEncoding.DecodeString(parts[1]) // Header to check time
+		fmt.Printf("DEBUG: Expected %s, got %s\n", signature, parts[2])
+		return false, "", errors.New("invalid signature")
+	}
+	payloadBytes, _ := base64.RawURLEncoding.DecodeString(parts[1]) // Header to check time
 	var claims map[string]interface{}
 	json.Unmarshal(payloadBytes, &claims)
+
+	headerBytes, _ := base64.RawURLEncoding.DecodeString(parts[0])
+	var header map[string]interface{}
+	json.Unmarshal(headerBytes, &header)
+
+	//Check the algorithm
+	if header["alg"] != "HS256" {
+		return false, "", errors.New("unsupported signing algorithm")
+	}
+
+	if _, ok := claims["sub"].(string); !ok {
+		return false, "", errors.New("missing subject claim")
+	}
+
+	if iat, ok := claims["iat"].(float64); ok {
+		if time.Now().Unix() < int64(iat) {
+			return false, "", errors.New("token used before issued")
+		}
+	}
 
 	// Check if token has expired
 	if exp, ok := claims["exp"].(float64); ok {
@@ -85,6 +104,6 @@ func VerifyToken(token string) (bool, string, error) {
 func HashPassowrd(password string) string {
 	hash := sha256.New()
 	hash.Write([]byte(password))
-	return base64.StdEncoding.EncodeToString(hash.Sum(nil))
+	return base64.RawURLEncoding.EncodeToString(hash.Sum(nil))
 
 }
