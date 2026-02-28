@@ -44,7 +44,7 @@ func CreateToken(userId string) (string, error) {
 	h := hmac.New(sha256.New, secretKey)
 	h.Write([]byte(payloadAndHeader))
 	signature := base64Encode(h.Sum(nil))
-	println("Signature CREATED", signature)
+	
 
 	// Return the jwt
 	return payloadAndHeader + "." + signature, nil
