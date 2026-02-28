@@ -13,7 +13,7 @@ func main() {
 	mux.HandleFunc(" /", internal.HomePath)
 	mux.HandleFunc(" /createuser", internal.CreateAccount)
 	mux.HandleFunc("/loginuser", internal.LoginAccount)
-	mux.Handle("/dashboard", internal.AuthMiddleware(http.HandlerFunc(internal.DashboardPath)))
+	mux.Handle("/dashboard",  internal.AuthMiddleware("customer")(http.HandlerFunc(internal.DashboardPath)))
 	fmt.Println("Server started on http://localhost:8080!")
 
 	http.ListenAndServe(":8080", mux)

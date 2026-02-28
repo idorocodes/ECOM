@@ -65,7 +65,7 @@ func checkIfUserExists(email string) (bool, error) {
 	return result, nil
 }
 
-func CreateUser(username, firstname, secondname, password, email string) (string, error) {
+func CreateUser(username, firstname, secondname, password, email, role string) (string, error) {
 	result, err := checkIfUserExists(email)
 
 	if err != nil {
@@ -83,6 +83,7 @@ func CreateUser(username, firstname, secondname, password, email string) (string
 			"secondname": secondname,
 			"password":   password,
 			"email":      email,
+			"role":       role,
 		}
 
 		data, err := json.Marshal(userData)
@@ -153,12 +154,12 @@ func LoginUser(password, email string) (LoginAccResponse, error) {
 	} else {
 
 		dbUserPassword := results[0]["password"].(string)
-		
+
 		if password != dbUserPassword {
 			return LoginAccResponse{}, errors.New("Wrong password")
 		}
 
-		token, err := CreateToken(results[0]["username"].(string))
+		token, err := CreateToken(results[0]["username"].(string), results[0]["role"].(string))
 
 		if err != nil {
 			return LoginAccResponse{}, errors.New("Token Error")
@@ -169,6 +170,7 @@ func LoginUser(password, email string) (LoginAccResponse, error) {
 			SecondName: results[0]["secondname"].(string),
 			Username:   results[0]["username"].(string),
 			Email:      results[0]["email"].(string),
+			Role:       results[0]["role"].(string),
 			Message:    "User Logged In",
 			Token:      token,
 			Success:    true,

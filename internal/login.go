@@ -19,6 +19,7 @@ type LoginAccResponse struct {
 	Email      string `json:"email"`
 	Message    string `jsosn:"message"`
 	Token      string `json:"token"`
+	Role       string `json:"role"`
 	Success    bool   `json:"success"`
 }
 
@@ -55,9 +56,8 @@ func LoginAccount(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-	
 		hashedPassword := HashPassowrd(reqBody.Password)
-		
+
 		response, error := LoginUser(hashedPassword, reqBody.Email)
 
 		if error != nil {

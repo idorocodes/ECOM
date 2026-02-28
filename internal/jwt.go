@@ -19,7 +19,7 @@ func base64Encode(src []byte) string {
 }
 
 // Create a new JWT token
-func CreateToken(userId string) (string, error) {
+func CreateToken(userId string, role string) (string, error) {
 	// A valid jwt token consists of three core parts seperated with (.)
 	// 1. JSON Header : This contains the meta data of the json web token, like the the algorithm for the token
 	// 2. Payload : This contains the user identity and other additional information like roles
@@ -32,9 +32,10 @@ func CreateToken(userId string) (string, error) {
 
 	// Payload
 	payload, _ := json.Marshal(map[string]interface{}{
-		"sub": userId,
-		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(time.Hour * 72).Unix(),
+		"sub":  userId,
+		"role": role,
+		"iat":  time.Now().Unix(),
+		"exp":  time.Now().Add(time.Minute * 30).Unix(),
 	})
 
 	payloadEncoded := base64Encode(payload)
@@ -44,18 +45,17 @@ func CreateToken(userId string) (string, error) {
 	h := hmac.New(sha256.New, secretKey)
 	h.Write([]byte(payloadAndHeader))
 	signature := base64Encode(h.Sum(nil))
-	
 
 	// Return the jwt
 	return payloadAndHeader + "." + signature, nil
 }
 
 // Verify token
-func VerifyToken(token string) (bool, string, error) {
+func VerifyToken(token string) (bool, string,string, error) {
 	parts := strings.Split(token, ".")
 
 	if len(parts) != 3 {
-		return false, "", errors.New("Wrong Token Length!")
+		return false, "","", errors.New("Wrong Token Length!")
 	}
 
 	payloadAndHeader := parts[0] + "." + parts[1] // Combine payload and header
@@ -65,8 +65,9 @@ func VerifyToken(token string) (bool, string, error) {
 
 	if !hmac.Equal([]byte(parts[2]), []byte(signature)) {
 		fmt.Printf("DEBUG: Expected %s, got %s\n", signature, parts[2])
-		return false, "", errors.New("invalid signature")
+		return false, "","", errors.New("invalid signature")
 	}
+
 	payloadBytes, _ := base64.RawURLEncoding.DecodeString(parts[1]) // Header to check time
 	var claims map[string]interface{}
 	json.Unmarshal(payloadBytes, &claims)
@@ -77,28 +78,34 @@ func VerifyToken(token string) (bool, string, error) {
 
 	//Check the algorithm
 	if header["alg"] != "HS256" {
-		return false, "", errors.New("unsupported signing algorithm")
+		return false, "","", errors.New("unsupported signing algorithm")
 	}
 
-	if _, ok := claims["sub"].(string); !ok {
-		return false, "", errors.New("missing subject claim")
+	userId, ok := claims["sub"].(string)
+	if len(userId) == 0 || !ok {
+		return false, "","", errors.New("missing subject claim")
+	}
+
+	role, ok := claims["role"].(string)
+	if len(role) == 0 || !ok {
+		return false, "","", errors.New("missing role")
 	}
 
 	if iat, ok := claims["iat"].(float64); ok {
 		if time.Now().Unix() < int64(iat) {
-			return false, "", errors.New("token used before issued")
+			return false, "","", errors.New("token used before issued")
 		}
 	}
 
 	// Check if token has expired
 	if exp, ok := claims["exp"].(float64); ok {
 		if time.Now().Unix() > int64(exp) {
-			return false, "", errors.New("Token Expired!")
+			return false, "","", errors.New("Token Expired!")
 		}
 	}
 
 	// Return the payload and true if all token is verified and correct
-	return true, parts[1], nil
+	return true, userId,role, nil
 }
 
 func HashPassowrd(password string) string {

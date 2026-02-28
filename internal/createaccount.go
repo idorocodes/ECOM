@@ -8,11 +8,12 @@ import (
 )
 
 type CreateAcc struct {
-	FirstName       string `json:"firstname"`
-	SecondName      string `json:"secondname"`
-	Username        string `json:"username"`
-	Email           string `json:"email"`
-	Password        string `json:"password"`
+	FirstName  string `json:"firstname"`
+	SecondName string `json:"secondname"`
+	Username   string `json:"username"`
+	Email      string `json:"email"`
+	Role       string `json:"role"`
+	Password   string `json:"password"`
 }
 
 type CreateAccResponse struct {
@@ -20,6 +21,7 @@ type CreateAccResponse struct {
 	SecondName string `json:"secondName"`
 	Username   string `json:"username"`
 	Email      string `json:"email"`
+	Role       string `jons:"role"`
 	Message    string `jsosn:"message"`
 	Token      string `json:"token"`
 	Success    bool   `json:"success"`
@@ -28,7 +30,6 @@ type CreateAccResponse struct {
 type AlreadyCreatedResponse struct {
 	Message string `json:"message"`
 }
-
 
 func CreateAccount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -56,8 +57,6 @@ func CreateAccount(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Bad Body", http.StatusBadRequest)
 		}
 
-		
-
 		_, err = mail.ParseAddress(reqBody.Email)
 		if err != nil {
 			errors := "Email is invalid"
@@ -65,19 +64,25 @@ func CreateAccount(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if len(reqBody.FirstName) == 0 || len(reqBody.SecondName) == 0 || len(reqBody.Username) == 0 {
-			errors := "Name is invalid"
+		if len(reqBody.FirstName) == 0 || len(reqBody.SecondName) == 0 || len(reqBody.Username) == 0 || len(reqBody.Role) == 0 {
+			errors := "Name  is invalid "
 			http.Error(w, errors, http.StatusBadRequest)
 			return
 		}
 
-		token, err := CreateToken(reqBody.Username)
+		if len(reqBody.Role) == 0 || reqBody.Role != "customer" && reqBody.Role != "admin" {
+			errors := " Role is invalid "
+			http.Error(w, errors, http.StatusBadRequest)
+			return
+		}
+
+		token, err := CreateToken(reqBody.Username, reqBody.Role)
 
 		hashedPassword := HashPassowrd(reqBody.Password)
 
-		reponse, error := CreateUser(reqBody.Username, reqBody.FirstName, reqBody.SecondName, hashedPassword, reqBody.Email)
+		reponse, error := CreateUser(reqBody.Username, reqBody.FirstName, reqBody.SecondName, hashedPassword, reqBody.Email, reqBody.Role)
 
-		if fmt.Sprintf("%v",error) == "User already exists in the db"{
+		if fmt.Sprintf("%v", error) == "User already exists in the db" {
 			data := AlreadyCreatedResponse{
 				Message: "User already exist in the database, please login",
 			}
@@ -86,8 +91,8 @@ func CreateAccount(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			return
-		}else if error != nil {
-             
+		} else if error != nil {
+
 			http.Error(w, fmt.Sprintf("%v", error), http.StatusInternalServerError)
 			return
 		} else {
@@ -97,6 +102,7 @@ func CreateAccount(w http.ResponseWriter, r *http.Request) {
 				SecondName: reqBody.SecondName,
 				Email:      reqBody.Email,
 				Username:   reqBody.Username,
+				Role:       reqBody.Role,
 				Success:    true,
 				Token:      token,
 			}
