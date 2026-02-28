@@ -21,8 +21,8 @@ type CreateAccResponse struct {
 	SecondName string `json:"secondName"`
 	Username   string `json:"username"`
 	Email      string `json:"email"`
-	Role       string `jons:"role"`
-	Message    string `jsosn:"message"`
+	Role       string `json:"role"`
+	Message    string `json:"message"`
 	Token      string `json:"token"`
 	Success    bool   `json:"success"`
 }
@@ -96,6 +96,7 @@ func CreateAccount(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("%v", error), http.StatusInternalServerError)
 			return
 		} else {
+			
 			data := CreateAccResponse{
 				Message:    reponse,
 				FirstName:  reqBody.FirstName,

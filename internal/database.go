@@ -180,3 +180,52 @@ func LoginUser(password, email string) (LoginAccResponse, error) {
 	return loginResponse, nil
 
 }
+
+func CreateAProduct(name string, price int, description, category, defaultcurrency string) (string, error) {
+
+	url := SupaURL + "/products"
+	var finalResponse string
+	productData := map[string]any{
+		"name":            name,
+		"price":           price,
+		"description":     description,
+		"defaultcurrency": defaultcurrency,
+		"category":        category,
+	}
+
+	data, err := json.Marshal(productData)
+
+	if err != nil {
+		return "", errors.New("Json error")
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
+	if err != nil {
+		return "", errors.New("Request error")
+	}
+
+	req.Header.Set("apiKey", SupaKey)
+	req.Header.Set("Authorization", "Bearer "+SupaKey)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Prefer", "return=minimal")
+
+	client := &http.Client{}
+
+	response, err := client.Do(req)
+
+	if err != nil {
+		return "", errors.New("Response error")
+	}
+
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(response.Body)
+		return "", errors.New("Supabase Error" + string(body))
+	}
+	if response.StatusCode == http.StatusCreated {
+		finalResponse = "Product Created in the db"
+	}
+
+	return finalResponse, nil
+}
