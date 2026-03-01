@@ -265,13 +265,8 @@ func GetAllProducts() ([]GetProduct, error) {
 	return result, nil
 }
 
-
-
-
-
 func GetSingleProduct(id string) ([]GetProduct, error) {
-
-	url := fmt.Sprintf("%s/products?id=eq.%s&select=*", SupaURL,id)
+	url := fmt.Sprintf("%s/products?id=eq.%s&select=*", SupaURL, id)
 	req, err := http.NewRequest("GET", url, nil)
 	var result []GetProduct
 
@@ -279,6 +274,56 @@ func GetSingleProduct(id string) ([]GetProduct, error) {
 		return []GetProduct{}, errors.New("Request error")
 	}
 	req.Header.Set("apiKey", SupaKey)
+	req.Header.Set("Authorization", "Bearer "+SupaKey)
+
+	client := &http.Client{}
+
+	response, err := client.Do(req)
+
+	if err != nil {
+		return []GetProduct{}, errors.New("Response error")
+	}
+
+	defer response.Body.Close()
+
+	var results []GetProduct
+	json.NewDecoder(response.Body).Decode(&results)
+
+	if len(results) == 0 {
+		return []GetProduct{}, errors.New("No products found")
+
+	} else {
+		result = results
+	}
+
+	return result, nil
+}
+
+func UpdateSingleProduct(id string, newName string, newPrice int) ([]GetProduct, error) {
+	url := fmt.Sprintf("%s/products?id=eq.%s", SupaURL, id)
+
+	var result []GetProduct
+
+	payload := map[string]interface{}{
+		"name":  newName,
+		"price": newPrice,
+	}
+
+	data, err := json.Marshal(payload)
+
+	if err != nil {
+		return []GetProduct{}, errors.New("Json error")
+	}
+
+	req, err := http.NewRequest("PATCH", url, bytes.NewBuffer(data))
+
+	if err != nil {
+		return []GetProduct{}, errors.New("Request error")
+	}
+
+	req.Header.Set("apiKey", SupaKey)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Prefer", "return=representation")
 	req.Header.Set("Authorization", "Bearer "+SupaKey)
 
 	client := &http.Client{}
