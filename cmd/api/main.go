@@ -16,7 +16,8 @@ func main() {
 	mux.HandleFunc("POST /api/v1/loginuser", internal.LoginAccount)
 	mux.Handle("GET /api/v1/dashboard", internal.AuthMiddleware("admin", "customer")(http.HandlerFunc(internal.DashboardPath)))
 	mux.Handle("POST /api/v1/createproduct", internal.AuthMiddleware("admin")(http.HandlerFunc(internal.CreateProduct)))
-	mux.Handle("GET /api/v1/getProduct", internal.AuthMiddleware("admin", "customer")(http.HandlerFunc(internal.GetProducts)))
+	mux.Handle("GET /api/v1/getproducts", internal.AuthMiddleware("admin", "customer")(http.HandlerFunc(internal.GetProducts)))
+	mux.Handle("GET /api/v1/getproduct", internal.AuthMiddleware("admin", "customer")(http.HandlerFunc(internal.GetOneProduct)))
 	
 	fmt.Println("Server started on http://localhost:8080!")
 

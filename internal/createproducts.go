@@ -14,6 +14,15 @@ type Product struct {
 	DefaultCurrency string `json:"defaultcurrency"`
 }
 
+type GetProduct struct {
+	Id 				string `json:"id"`
+	Name            string `json:"name"`
+	Price           int    `json:"price"`
+	Description     string `json:"description"`
+	Category        string `json:"category"`
+	DefaultCurrency string `json:"defaultcurrency"`
+}
+
 type CreateProductResponse struct {
 	Message string `json:"message"`
 	Code    int    `json:"code"`

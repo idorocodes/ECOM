@@ -230,14 +230,14 @@ func CreateAProduct(name string, price int, description, category, defaultcurren
 	return finalResponse, nil
 }
 
-func GetAllProducts() ([]Product, error) {
+func GetAllProducts() ([]GetProduct, error) {
 
 	url := fmt.Sprintf("%s/products?select=*", SupaURL)
 	req, err := http.NewRequest("GET", url, nil)
-	var result []Product
+	var result []GetProduct
 
 	if err != nil {
-		return []Product{}, errors.New("Request error")
+		return []GetProduct{}, errors.New("Request error")
 	}
 	req.Header.Set("apiKey", SupaKey)
 	req.Header.Set("Authorization", "Bearer "+SupaKey)
@@ -247,16 +247,55 @@ func GetAllProducts() ([]Product, error) {
 	response, err := client.Do(req)
 
 	if err != nil {
-		return []Product{}, errors.New("Response error")
+		return []GetProduct{}, errors.New("Response error")
 	}
 
 	defer response.Body.Close()
 
-	var results []Product
+	var results []GetProduct
 	json.NewDecoder(response.Body).Decode(&results)
 
 	if len(results) == 0 {
-		return []Product{}, errors.New("No products found")
+		return []GetProduct{}, errors.New("Product not found in the db")
+
+	} else {
+		result = results
+	}
+
+	return result, nil
+}
+
+
+
+
+
+func GetSingleProduct(id string) ([]GetProduct, error) {
+
+	url := fmt.Sprintf("%s/products?id=eq.%s&select=*", SupaURL,id)
+	req, err := http.NewRequest("GET", url, nil)
+	var result []GetProduct
+
+	if err != nil {
+		return []GetProduct{}, errors.New("Request error")
+	}
+	req.Header.Set("apiKey", SupaKey)
+	req.Header.Set("Authorization", "Bearer "+SupaKey)
+
+	client := &http.Client{}
+
+	response, err := client.Do(req)
+
+	if err != nil {
+		return []GetProduct{}, errors.New("Response error")
+	}
+
+	defer response.Body.Close()
+
+	var results []GetProduct
+	json.NewDecoder(response.Body).Decode(&results)
+
+	if len(results) == 0 {
+		return []GetProduct{}, errors.New("No products found")
 
 	} else {
 		result = results
