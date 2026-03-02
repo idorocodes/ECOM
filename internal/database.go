@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	SupaURL = "https://wampmtueakfcnvdvaxry.supabase.co/rest/v1"
-	SupaKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndhbXBtdHVlYWtmY252ZHZheHJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxODM4MjgsImV4cCI6MjA4Nzc1OTgyOH0.EJFbo7C748DMu5fDl7WDm4qXliMkIQnrOb3reUL8n7k"
+	SupaURL = ""
+	SupaKey = ""
 )
 
 type User struct {
