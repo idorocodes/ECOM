@@ -65,6 +65,41 @@ func checkIfUserExists(email string) (bool, error) {
 	return result, nil
 }
 
+func GetAllUsers() ([]AllUsers, error) {
+
+	url := fmt.Sprintf("%s/users?select=*", SupaURL)
+	req, err := http.NewRequest("GET", url, nil)
+	var result []AllUsers
+
+	if err != nil {
+		return []AllUsers{}, errors.New("Request error")
+	}
+	req.Header.Set("apiKey", SupaKey)
+	req.Header.Set("Authorization", "Bearer "+SupaKey)
+
+	client := &http.Client{}
+
+	response, err := client.Do(req)
+
+	if err != nil {
+		return []AllUsers{}, errors.New("Response error")
+	}
+
+	defer response.Body.Close()
+
+	var results []AllUsers
+	json.NewDecoder(response.Body).Decode(&results)
+
+	if len(results) == 0 {
+		return []AllUsers{}, errors.New("No users found in the db")
+
+	} else {
+		result = results
+	}
+
+	return result, nil
+}
+
 func CreateUser(username, firstname, secondname, password, email, role string) (string, error) {
 	result, err := checkIfUserExists(email)
 
@@ -231,14 +266,14 @@ func CreateAProduct(name string, price int, description, category, defaultcurren
 	return finalResponse, nil
 }
 
-func GetAllProducts() ([]GetProduct, error) {
+func GetAllProducts() ([]Product, error) {
 
 	url := fmt.Sprintf("%s/products?select=*", SupaURL)
 	req, err := http.NewRequest("GET", url, nil)
-	var result []GetProduct
+	var result []Product
 
 	if err != nil {
-		return []GetProduct{}, errors.New("Request error")
+		return []Product{}, errors.New("Request error")
 	}
 	req.Header.Set("apiKey", SupaKey)
 	req.Header.Set("Authorization", "Bearer "+SupaKey)
@@ -248,16 +283,16 @@ func GetAllProducts() ([]GetProduct, error) {
 	response, err := client.Do(req)
 
 	if err != nil {
-		return []GetProduct{}, errors.New("Response error")
+		return []Product{}, errors.New("Response error")
 	}
 
 	defer response.Body.Close()
 
-	var results []GetProduct
+	var results []Product
 	json.NewDecoder(response.Body).Decode(&results)
 
 	if len(results) == 0 {
-		return []GetProduct{}, errors.New("Product not found in the db")
+		return []Product{}, errors.New("Product not found in the db")
 
 	} else {
 		result = results
@@ -402,7 +437,6 @@ func CreateAnOrder(id, user_id, address string) (string, int, error) {
 		return "", 0, fmt.Errorf("network error: %w", err)
 	}
 	defer resp.Body.Close()
-	
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return "", 0, fmt.Errorf("supabase error: status %d", resp.StatusCode)
@@ -422,7 +456,7 @@ func CreateAnOrder(id, user_id, address string) (string, int, error) {
 	var finalResponse string
 	productData := map[string]any{
 		"product_id": results[0].Id,
-		"user_id":     user_id ,
+		"user_id":    user_id,
 		"address":    address,
 	}
 
@@ -462,4 +496,39 @@ func CreateAnOrder(id, user_id, address string) (string, int, error) {
 
 	return finalResponse, orderresponse.StatusCode, nil
 
+}
+
+func GetAllOrders() ([]AllOrders, error) {
+
+	url := fmt.Sprintf("%s/orders?select=*", SupaURL)
+	req, err := http.NewRequest("GET", url, nil)
+	var result []AllOrders
+
+	if err != nil {
+		return []AllOrders{}, errors.New("Request error")
+	}
+	req.Header.Set("apiKey", SupaKey)
+	req.Header.Set("Authorization", "Bearer "+SupaKey)
+
+	client := &http.Client{}
+
+	response, err := client.Do(req)
+
+	if err != nil {
+		return []AllOrders{}, errors.New("Response error")
+	}
+
+	defer response.Body.Close()
+
+	var results []AllOrders
+	json.NewDecoder(response.Body).Decode(&results)
+
+	if len(results) == 0 {
+		return []AllOrders{}, errors.New("No orders found in the db")
+
+	} else {
+		result = results
+	}
+
+	return result, nil
 }
