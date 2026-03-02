@@ -43,6 +43,11 @@ func GetOneProduct(w http.ResponseWriter, r *http.Request) {
 		}
 
 		response, error := GetSingleProduct(reqBody.Id)
+
+		if fmt.Sprintf("%v", error) == "No products found" {
+			http.Error(w, "Product not found in the database!", http.StatusNotFound)
+			return
+		}
 		if error != nil {
 
 			http.Error(w, fmt.Sprintf("%v", error), http.StatusInternalServerError)

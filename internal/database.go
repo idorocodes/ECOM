@@ -265,13 +265,13 @@ func GetAllProducts() ([]GetProduct, error) {
 	return result, nil
 }
 
-func GetSingleProduct(id string) ([]GetProduct, error) {
+func GetSingleProduct(id string) (GetProduct, error) {
 	url := fmt.Sprintf("%s/products?id=eq.%s&select=*", SupaURL, id)
 	req, err := http.NewRequest("GET", url, nil)
-	var result []GetProduct
+	var result GetProduct
 
 	if err != nil {
-		return []GetProduct{}, errors.New("Request error")
+		return GetProduct{}, errors.New("Request error")
 	}
 	req.Header.Set("apiKey", SupaKey)
 	req.Header.Set("Authorization", "Bearer "+SupaKey)
@@ -281,7 +281,7 @@ func GetSingleProduct(id string) ([]GetProduct, error) {
 	response, err := client.Do(req)
 
 	if err != nil {
-		return []GetProduct{}, errors.New("Response error")
+		return GetProduct{}, errors.New("Response error")
 	}
 
 	defer response.Body.Close()
@@ -290,19 +290,16 @@ func GetSingleProduct(id string) ([]GetProduct, error) {
 	json.NewDecoder(response.Body).Decode(&results)
 
 	if len(results) == 0 {
-		return []GetProduct{}, errors.New("No products found")
+		return GetProduct{}, errors.New("No products found")
 
 	} else {
-		result = results
+		result = results[0]
 	}
 
 	return result, nil
 }
-
 func UpdateSingleProduct(id string, newName string, newPrice int) ([]GetProduct, error) {
 	url := fmt.Sprintf("%s/products?id=eq.%s", SupaURL, id)
-
-	var result []GetProduct
 
 	payload := map[string]interface{}{
 		"name":  newName,
@@ -310,41 +307,69 @@ func UpdateSingleProduct(id string, newName string, newPrice int) ([]GetProduct,
 	}
 
 	data, err := json.Marshal(payload)
-
 	if err != nil {
-		return []GetProduct{}, errors.New("Json error")
+		return nil, fmt.Errorf("json marshal error: %w", err)
 	}
 
 	req, err := http.NewRequest("PATCH", url, bytes.NewBuffer(data))
-
 	if err != nil {
-		return []GetProduct{}, errors.New("Request error")
+		return nil, fmt.Errorf("request creation error: %w", err)
 	}
 
 	req.Header.Set("apiKey", SupaKey)
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Prefer", "return=representation")
 	req.Header.Set("Authorization", "Bearer "+SupaKey)
+	req.Header.Set("Prefer", "return=representation")
 
 	client := &http.Client{}
-
-	response, err := client.Do(req)
-
+	resp, err := client.Do(req)
 	if err != nil {
-		return []GetProduct{}, errors.New("Response error")
+		return nil, fmt.Errorf("network error: %w", err)
 	}
+	defer resp.Body.Close()
 
-	defer response.Body.Close()
+	
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("supabase error: status %d", resp.StatusCode)
+	}
 
 	var results []GetProduct
-	json.NewDecoder(response.Body).Decode(&results)
-
-	if len(results) == 0 {
-		return []GetProduct{}, errors.New("No products found")
-
-	} else {
-		result = results
+	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
+		return nil, fmt.Errorf("decode error: %w", err)
 	}
 
-	return result, nil
+	if len(results) == 0 {
+		return nil, errors.New("no products matched the ID")
+	}
+
+	return results, nil
+}
+func DeleteSingleProduct(id string) (bool, error) {
+	url := fmt.Sprintf("%s/products?id=eq.%s", SupaURL, id)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return false, err
+	}
+
+	req.Header.Set("apiKey", SupaKey)
+	req.Header.Set("Authorization", "Bearer "+SupaKey)
+
+	req.Header.Set("Prefer", "return=representation")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	var deletedItems []GetProduct
+	json.NewDecoder(resp.Body).Decode(&deletedItems)
+
+	if len(deletedItems) == 0 {
+		return false, errors.New("nothing was deleted (ID not found)")
+	}
+
+	return true, nil
 }
