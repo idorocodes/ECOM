@@ -20,6 +20,7 @@ func main() {
 	mux.Handle("GET /api/v1/getproduct", internal.AuthMiddleware("admin", "customer")(http.HandlerFunc(internal.GetOneProduct)))
 	mux.Handle("PATCH /api/v1/updateproduct", internal.AuthMiddleware("admin")(http.HandlerFunc(internal.UpdateAProduct)))
 	mux.Handle("DELETE /api/v1/deleteproduct", internal.AuthMiddleware("admin")(http.HandlerFunc(internal.DeleteProduct)))
+	mux.Handle("POST /api/v1/createorder", internal.AuthMiddleware("admin", "customer")(http.HandlerFunc(internal.CreateOrder)))
 	fmt.Println("Server started on http://localhost:8080!")
 
 	http.ListenAndServe(":8080", mux)

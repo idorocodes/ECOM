@@ -11,13 +11,15 @@ type Product struct {
 	Price           int    `json:"price"`
 	Description     string `json:"description"`
 	Category        string `json:"category"`
+	Status          string `json:"status"`
 	DefaultCurrency string `json:"defaultcurrency"`
 }
 
 type GetProduct struct {
-	Id 				string `json:"id"`
+	Id              string `json:"id"`
 	Name            string `json:"name"`
 	Price           int    `json:"price"`
+	Status          string `json:"status"`
 	Description     string `json:"description"`
 	Category        string `json:"category"`
 	DefaultCurrency string `json:"defaultcurrency"`
@@ -57,11 +59,11 @@ func CreateProduct(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if len(reqBody.Name) == 0 || len(reqBody.Description) == 0 || len(reqBody.Category) == 0 || len(reqBody.DefaultCurrency) == 0 {
-			http.Error(w, "Check body", http.StatusBadRequest)
+		if len(reqBody.Name) == 0 || len(reqBody.Description) == 0 || len(reqBody.Category) == 0 || len(reqBody.DefaultCurrency) == 0  || len(reqBody.Status) == 0{
+			http.Error(w, "Check body, some fields are not supplied", http.StatusBadRequest)
 			return
 		}
-		reponse, error := CreateAProduct(reqBody.Name, reqBody.Price, reqBody.Description, reqBody.Category, reqBody.DefaultCurrency)
+		reponse, error := CreateAProduct(reqBody.Name, reqBody.Price, reqBody.Description, reqBody.Category, reqBody.DefaultCurrency,reqBody.Status)
 
 		if error != nil {
 

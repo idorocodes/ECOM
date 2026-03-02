@@ -2,10 +2,12 @@ package internal
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 )
+
+type ctxId struct{}
+type ctxRole struct{}
 
 func AuthMiddleware(allowedRole ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -19,20 +21,16 @@ func AuthMiddleware(allowedRole ...string) func(http.Handler) http.Handler {
 			token := strings.TrimPrefix(authHeader, "Bearer ")
 
 			isValid, userId, userRole, err := VerifyToken(token)
-
+			if err != nil || !isValid {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
 			if len(userId) == 0 || len(userRole) == 0 {
 				http.Error(w, "Token Error", http.StatusUnauthorized)
 				return
 			}
 
-			if err != nil {
-				http.Error(w, fmt.Sprintf("%v", err), http.StatusUnauthorized)
-				return
-			}
-			if !isValid {
-				http.Error(w, fmt.Sprintf("%v", err), http.StatusUnauthorized)
-				return
-			}
+			
 
 			isAllowed := false
 
@@ -48,8 +46,8 @@ func AuthMiddleware(allowedRole ...string) func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), userId, userRole)
-
+			ctx := context.WithValue(r.Context(), ctxId{}, userId)
+			ctx = context.WithValue(ctx, ctxRole{}, userRole)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

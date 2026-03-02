@@ -181,7 +181,7 @@ func LoginUser(password, email string) (LoginAccResponse, error) {
 
 }
 
-func CreateAProduct(name string, price int, description, category, defaultcurrency string) (string, error) {
+func CreateAProduct(name string, price int, description, category, defaultcurrency, status string) (string, error) {
 
 	url := SupaURL + "/products"
 	var finalResponse string
@@ -189,6 +189,7 @@ func CreateAProduct(name string, price int, description, category, defaultcurren
 		"name":            name,
 		"price":           price,
 		"description":     description,
+		"status":          status,
 		"defaultcurrency": defaultcurrency,
 		"category":        category,
 	}
@@ -328,7 +329,6 @@ func UpdateSingleProduct(id string, newName string, newPrice int) ([]GetProduct,
 	}
 	defer resp.Body.Close()
 
-	
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("supabase error: status %d", resp.StatusCode)
 	}
@@ -372,4 +372,94 @@ func DeleteSingleProduct(id string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func CreateAnOrder(id, user_id, address string) (string, int, error) {
+	url := fmt.Sprintf("%s/products?id=eq.%s", SupaURL, id)
+
+	payload := map[string]interface{}{
+		"status": "ordered",
+	}
+
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return "", 0, fmt.Errorf("json marshal error: %w", err)
+	}
+
+	req, err := http.NewRequest("PATCH", url, bytes.NewBuffer(data))
+	if err != nil {
+		return "", 0, fmt.Errorf("request creation error: %w", err)
+	}
+
+	req.Header.Set("apiKey", SupaKey)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+SupaKey)
+	req.Header.Set("Prefer", "return=representation")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", 0, fmt.Errorf("network error: %w", err)
+	}
+	defer resp.Body.Close()
+	
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", 0, fmt.Errorf("supabase error: status %d", resp.StatusCode)
+	}
+
+	var results []GetProduct
+	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
+		return "", 0, fmt.Errorf("decode error: %w", err)
+	}
+
+	if len(results) == 0 {
+		return "", 0, errors.New("no products matched the ID")
+	}
+
+	orderurl := SupaURL + "/orders"
+
+	var finalResponse string
+	productData := map[string]any{
+		"product_id": results[0].Id,
+		"user_id":     user_id ,
+		"address":    address,
+	}
+
+	orderdata, err := json.Marshal(productData)
+
+	if err != nil {
+		return "", 0, errors.New("Json error")
+	}
+
+	orderreq, err := http.NewRequest("POST", orderurl, bytes.NewBuffer(orderdata))
+	if err != nil {
+		return "", 0, errors.New("Request error")
+	}
+
+	orderreq.Header.Set("apiKey", SupaKey)
+	orderreq.Header.Set("Authorization", "Bearer "+SupaKey)
+	orderreq.Header.Set("Content-Type", "application/json")
+	orderreq.Header.Set("Prefer", "return=minimal")
+
+	orderclient := &http.Client{}
+
+	orderresponse, err := orderclient.Do(orderreq)
+
+	if err != nil {
+		return "", 0, errors.New("Response error")
+	}
+
+	defer orderresponse.Body.Close()
+
+	if orderresponse.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(orderresponse.Body)
+		return "", 0, errors.New("Supabase Error" + string(body))
+	}
+	if orderresponse.StatusCode == http.StatusCreated {
+		finalResponse = "Order Created in the db"
+	}
+
+	return finalResponse, orderresponse.StatusCode, nil
+
 }
